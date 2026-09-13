@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, session
 
 from extensions import db, bcrypt, migrate
@@ -13,7 +15,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
 # Session configuration
-app.config["SECRET_KEY"] = "development-secret-key-change-this-later"
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "development-secret-key-change-this-later"
+)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 
 

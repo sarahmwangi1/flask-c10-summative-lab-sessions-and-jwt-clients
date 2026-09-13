@@ -1,12 +1,14 @@
-# Full Auth Flask Backend – Productivity Tool
+# Full Auth Flask Backend - Productivity App
 
-## Project Description
+## Overview
 
-This project is a full-stack productivity tool built with Flask and React.
+This project is a full-stack productivity application built with **Flask**, **SQLAlchemy**, **Flask-Bcrypt**, **Flask-Migrate**, and **React**.
 
-The backend provides session-based authentication and a protected Notes resource. Users can create an account, log in, log out, and check their current session. Authenticated users can create, view, update, and delete their own notes.
+The application provides user authentication using **Flask sessions** and allows authenticated users to create, view, update, and delete their own notes.
 
-The application demonstrates Flask authentication, password protection with bcrypt, SQLAlchemy database relationships, CRUD operations, protected routes, database migrations, seed data, and pagination.
+Each user's notes are protected so that users can only access and modify notes that belong to their account.
+
+---
 
 ## Technologies Used
 
@@ -18,45 +20,180 @@ The application demonstrates Flask authentication, password protection with bcry
 * Flask-Migrate
 * Flask-Bcrypt
 * SQLite
+* Flask Sessions
 
 ### Frontend
 
 * React
 * React Router
 * Styled Components
+* JavaScript
+
+---
 
 ## Project Structure
 
 ```text
 flask-c10-summative-lab-sessions-and-jwt-clients/
+│
+├── client-with-sessions/
+│   ├── public/
+│   ├── src/
+│   │   └── components/
+│   │       ├── App.js
+│   │       ├── Login.js
+│   │       ├── LoginForm.js
+│   │       ├── SignUpForm.js
+│   │       └── NavBar.js
+│   └── package.json
+│
+├── client-with-jwt/
+│
 ├── server/
 │   ├── app.py
-│   ├── models.py
 │   ├── extensions.py
-│   ├── seed.py
+│   ├── models.py
+│   ├── Pipfile
+│   ├── Pipfile.lock
+│   ├── instance/
+│   │   └── app.db
 │   └── migrations/
-├── client-with-sessions/
-│   └── src/
-├── client-with-jwt/
-│   └── src/
+│
 └── README.md
 ```
 
+---
+
+## Features
+
+### User Authentication
+
+Users can:
+
+* Create an account
+* Log in
+* Check their current session
+* Log out
+* Receive appropriate validation and authentication responses
+
+Passwords are securely hashed using **Flask-Bcrypt** rather than being stored as plain text.
+
+### Notes
+
+Authenticated users can:
+
+* Create notes
+* View their notes
+* Update their notes
+* Delete their notes
+
+Users can only access notes belonging to their own account.
+
+---
+
 ## Authentication
 
-This project uses Flask sessions for authentication.
+This project uses **Flask session authentication**.
 
-When a user successfully signs up or logs in, their user ID is stored in the Flask session:
+When a user successfully logs in, their user ID is stored in the Flask session.
 
-```python
-session["user_id"] = user.id
+Protected routes check the session before allowing access to user-specific resources.
+
+The frontend communicates with the backend using `fetch()` requests and includes credentials so that the session cookie is maintained.
+
+---
+
+## API Routes
+
+### Authentication
+
+| Method | Route            | Description                        |
+| ------ | ---------------- | ---------------------------------- |
+| POST   | `/signup`        | Creates a new user                 |
+| POST   | `/login`         | Logs a user in                     |
+| GET    | `/check_session` | Checks whether a user is logged in |
+| DELETE | `/logout`        | Logs the current user out          |
+
+### Notes
+
+| Method | Route         | Description                                      |
+| ------ | ------------- | ------------------------------------------------ |
+| GET    | `/notes`      | Returns the logged-in user's notes               |
+| POST   | `/notes`      | Creates a new note                               |
+| GET    | `/notes/<id>` | Returns one note belonging to the logged-in user |
+| PATCH  | `/notes/<id>` | Updates a user's note                            |
+| DELETE | `/notes/<id>` | Deletes a user's note                            |
+
+Protected note routes require an authenticated session.
+
+---
+
+## Data Models
+
+### User
+
+The `User` model contains:
+
+* `id`
+* `username`
+* `password_hash`
+
+Usernames are unique.
+
+Passwords are hashed using Flask-Bcrypt.
+
+### Note
+
+The `Note` model contains:
+
+* `id`
+* `title`
+* `content`
+* `user_id`
+
+Each note belongs to a specific user through the `user_id` foreign key.
+
+---
+
+## Validation and Access Control
+
+The backend validates user input before creating or updating records.
+
+Authentication is required for protected routes.
+
+A user cannot access, edit, or delete another user's notes.
+
+The backend verifies the logged-in user's ID against the note's `user_id` before performing protected operations.
+
+---
+
+## Database
+
+The application uses **SQLite** for local development.
+
+The database is located at:
+
+```text
+server/instance/app.db
 ```
 
-Protected routes use the session to determine which user is making the request.
+Database migrations are managed using **Flask-Migrate**.
 
-Passwords are never stored as plain text. They are securely hashed using Flask-Bcrypt.
+To create a migration after changing the models:
 
-## Backend Installation
+```bash
+flask --app app db migrate -m "Describe your changes"
+```
+
+To apply migrations:
+
+```bash
+flask --app app db upgrade
+```
+
+---
+
+## Backend Setup
 
 Navigate to the server directory:
 
@@ -64,245 +201,178 @@ Navigate to the server directory:
 cd server
 ```
 
-Create and activate the Python environment if needed.
-
-Install the required dependencies:
+Install the project dependencies with Pipenv:
 
 ```bash
 pipenv install
 ```
 
-Enter the Pipenv environment:
+Activate the virtual environment:
 
 ```bash
 pipenv shell
 ```
 
-## Database Setup
-
-Initialize the database migrations if the migration setup has not already been created:
+Initialize the database if necessary:
 
 ```bash
-flask db upgrade
+flask --app app db upgrade
 ```
 
-The application uses SQLite for the database.
-
-## Seed the Database
-
-To create starter users and notes, run:
+Start the Flask development server:
 
 ```bash
-python seed.py
+flask --app app run --port 5555
 ```
 
-The seed file creates:
-
-* User `alice`
-* User `bob`
-* Sample notes belonging to each user
-
-The seeded password for both users is:
-
-```text
-password123
-```
-
-## Running the Backend
-
-From the `server` directory:
-
-```bash
-python app.py
-```
-
-The Flask API runs on:
+The backend runs at:
 
 ```text
 http://localhost:5555
 ```
 
-## Running the Sessions React Client
+---
 
-Open another terminal and navigate to:
+## Frontend Setup
+
+Open another terminal and navigate to the sessions client:
 
 ```bash
 cd client-with-sessions
 ```
 
-Install the frontend dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-Start the React application:
+Start the React development server:
 
 ```bash
 npm start
 ```
 
-The sessions client runs on:
+The React frontend communicates with the Flask backend running on port `5555`.
 
-```text
-http://localhost:4000
-```
+---
 
-The React client is configured to proxy API requests to the Flask backend on port `5555`.
-
-## Authentication API Routes
-
-### Sign Up
-
-```http
-POST /signup
-```
-
-Example request:
+## Example Signup Request
 
 ```json
 {
-  "username": "alice",
+  "username": "sarah",
   "password": "password123",
   "password_confirmation": "password123"
 }
 ```
 
-### Login
+Example request:
 
-```http
-POST /login
+```text
+POST /signup
 ```
 
-Example request:
+---
+
+## Example Login Request
 
 ```json
 {
-  "username": "alice",
+  "username": "sarah",
   "password": "password123"
 }
 ```
 
-### Check Session
-
-```http
-GET /check_session
-```
-
-Returns the currently logged-in user or an empty object when no user is logged in.
-
-### Logout
-
-```http
-DELETE /logout
-```
-
-Removes the user's session.
-
-## Notes API Routes
-
-All Notes routes are protected and require a logged-in user.
-
-### Get Notes
-
-```http
-GET /notes
-```
-
-Returns only notes belonging to the logged-in user.
-
-### Create a Note
-
-```http
-POST /notes
-```
-
 Example request:
 
-```json
-{
-  "title": "My Note",
-  "content": "This is my note."
-}
+```text
+POST /login
 ```
 
-### Get One Note
+---
 
-```http
-GET /notes/<id>
+## Error Handling
+
+The API returns appropriate HTTP status codes and JSON responses for situations such as:
+
+* Missing required fields
+* Invalid credentials
+* Duplicate usernames
+* Password confirmation mismatch
+* Unauthenticated requests
+* Requests for notes that do not belong to the current user
+* Requests for resources that do not exist
+
+---
+
+## Running the Application
+
+Start the Flask backend first:
+
+```bash
+cd server
+pipenv shell
+flask --app app run --port 5555
 ```
 
-### Update a Note
+Then, in a separate terminal, start the React application:
 
-```http
-PATCH /notes/<id>
+```bash
+cd client-with-sessions
+npm start
 ```
 
-Example request:
+Open the React application in the browser and use the signup and login forms to authenticate.
 
-```json
-{
-  "title": "Updated Note",
-  "content": "Updated content."
-}
+Once logged in, the application can communicate with the protected notes API.
+
+---
+
+## Testing the Backend
+
+The Flask API can be tested using the browser, Postman, curl, or the React frontend.
+
+For example, to test whether the backend is running:
+
+```bash
+curl http://localhost:5555/
 ```
 
-### Delete a Note
+The authentication endpoints can then be tested by creating a user, logging in, checking the session, accessing notes, and logging out.
 
-```http
-DELETE /notes/<id>
-```
+---
 
-## Pagination
+## Security
 
-The Notes index route supports pagination using `page` and `per_page` query parameters.
+This application demonstrates several basic authentication and authorization practices:
 
-Example:
+* Passwords are hashed with Flask-Bcrypt.
+* User sessions are used to identify authenticated users.
+* Protected routes require authentication.
+* Users can only access their own notes.
+* Password hashes are never returned to the client.
 
-```http
-GET /notes?page=1&per_page=10
-```
+---
 
-The response includes the notes and pagination information such as:
+## Learning Objectives
 
-* Current page
-* Items per page
-* Total notes
-* Total pages
+This project demonstrates understanding of:
 
-## Authorization and Ownership
+* Building a Flask REST API
+* Creating SQLAlchemy models and relationships
+* Using Flask-Migrate
+* Hashing passwords with Bcrypt
+* Implementing session-based authentication
+* Protecting API routes
+* Implementing CRUD operations
+* Connecting a React frontend to a Flask backend
+* Managing user-specific resources
+* Handling HTTP status codes and JSON responses
 
-Users can only access their own notes.
-
-For example, Alice can access Alice's notes, but she cannot view, update, or delete Bob's notes.
-
-Unauthenticated requests to protected Notes routes return:
-
-```http
-401 Unauthorized
-```
-
-Requests for notes that do not belong to the logged-in user return:
-
-```http
-404 Not Found
-```
-
-## Testing
-
-The application can be tested by:
-
-1. Creating a new account.
-2. Logging in.
-3. Checking the active session.
-4. Creating a note.
-5. Viewing notes.
-6. Editing a note.
-7. Deleting a note.
-8. Logging out.
-9. Confirming protected routes reject unauthenticated requests.
-10. Logging in as another user and confirming users only see their own notes.
+---
 
 ## Author
 
-Sarah Mwangi
+**Sarah Mwangi**
+
